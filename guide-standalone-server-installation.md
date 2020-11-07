@@ -21,17 +21,27 @@ Traffic from the Signata Server to the Enterprise Certificate Authority is via s
 
 ## Standalone Service Installation
 
-1. Download and run the __Signata Enterprise Standalone.exe__ installer.
+1. Download and run the **Signata Enterprise Standalone.exe** installer.
 
-2. The installation wizard will appear. Click __Next__.
+2. The installation wizard will appear. Click **Next**.
 
-3. Click __Next__.
+![Signata MFA Server Wizard Start](images/image001.png)
 
-4. Click __Install__.
+3. Click **Next**.
 
-5. Click __Finish__.
+![Signata MFA Server Installation Folder](images/image002.png)
+
+4. Click **Install**.
+
+![Signata MFA Server Start Install](images/image003.png)
+
+5. Click **Finish**.
+
+![Signata MFA Finish](images/image004.png)
 
 6. Once the package has installed, the _Signata Enterprise Service_ will be running. Stop the service for now, as additional configuration is required before you can start it again.
+
+![Signata MFA Service](images/image005.png)
 
 ## Service Account Creation
 
@@ -41,11 +51,19 @@ The name of the account is not important, but it can be useful to name it specif
 
 Please ensure that the password for this service account does not contain any reserved JSON characters. This includes single quotes (‘), quotes (”), and backslashes (\).
 
+![svc_signata Service Account](images/image006.png)
+
+![svc_signata Service Account Group](images/image007.png)
+
 (If you are forced to use a password containing these reserved characters, you will need to escape the characters when you edit the appsettings.json file in later steps. Contact Signata Support if you need assistance with escaping these characters correctly.)
 
 Once you have created this service account, modify the _Signata Enterprise Service_ to Log On as the service account.
 
-And finally modify the __C:\ProgramData\Signata\signata-enterprise.sqlite__ database file to allow Full control to the service account.
+![Signata MFA change log on account](images/image008.png)
+
+And finally modify the **C:\ProgramData\Signata\signata-enterprise.sqlite** database file to allow Full control to the service account.
+
+![Signata MFA database file permissions](images/image009.png)
 
 ## IIS & Reverse Proxy Configuration
 
@@ -57,21 +75,233 @@ As Signata Standalone only works on Windows, it is easiest to use IIS as a rever
 
 ### Enabling IIS
 
-1. First, to enable IIS, open Server Manager and use the __Add Roles and Features Wizard__. Click __Next__.
+1. First, to enable IIS, open Server Manager and use the **Add Roles and Features Wizard**. Click **Next**.
+
+![IIS Add Role Wizard Start](images/image010.png)
+
+2. Click **Next**.
+
+![Select Server](images/image011.png)
+
+3. Tick **Web Server (IIS)**.
+
+![Enable IIS Role](images/image012.png)
+
+4. When prompted to add required features, click **Add Features**.
+
+![Confirm Additional Features](images/image013.png)
+
+5. Click **Next**.
+
+![Confirm Roles](images/image014.png)
+
+6. Click **Next**.
+
+![Click Next for Features](images/image015.png)
+
+7. Click **Next**.
+
+![Click Next for IIS Role](images/image016.png)
+
+8. You can leave all the role services as their defaults and click **Next**.
+
+![Click Next for Role Services](images/image017.png)
+
+9. Click **Install**.
+
+![Click Install](images/image018.png)
 
 ### Installing Reverse Proxy Modules
 
+Next, we need to install two modules for IIS: Application Request Routing and URL Rewrite.
+
+Application Request Routing can be downloaded directly from Microsoft at: [https://www.iis.net/downloads/microsoft/application-request-routing](https://www.iis.net/downloads/microsoft/application-request-routing) (note: use the “additional downloads” option to get the offline installer).
+
+URL Rewrite can be downloaded directly from Microsoft at: [https://www.iis.net/downloads/microsoft/url-rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) (note: use the “additional downloads” option to get the offline installer).
+
+1. On the same IIS server, run the installer for the Rewrite module.
+
+![Rewrite Module MSI file](images/image019.png)
+
+2. Tick **I accept the terms in the License Agreement** and click **Install**.
+
+![URL Rewrite Install Wizard](images/image020.png)
+
+3. Click **Finish**.
+
+![Complete URL Rewrite Install Wizard](images/image021.png)
+
+4. On the same IIS server, run the installer for the Request Router module.
+
+![Request Router MSI file](images/image022.png)
+
+5. Tick **I accept the terms in the License Agreement** and click **Install**.
+
+![Request Router Install Wizard](images/image023.png)
+
+6.  Click **Finish**.
+
+![Complete Request Router Install Wizard](images/image024.png)
+
 ### Configuring the Reverse Proxy
+
+1. To configure an IIS Reverse Proxy, open **IIS Manager** and click on the **Default Web Site**.
+
+![Default Web Site](images/image025.png)
+
+> Note: using the Default Web Site will override any other web server you may have already installed on the server. If you wish to host the Signata Reverse Proxy alongside other services, you can register it as a separate web site and run it on any port you desire.
+
+1. Double-click on the **URL Rewrite** module.
+
+![URL Rewrite Module](images/image026.png)
+
+2. Click **Add Rule(s)…**.
+
+![Add Rule](images/image027.png)
+
+3. Select **Reverse Proxy** and click **OK**.
+
+![Reverse Proxy Template](images/image028.png)
+
+4. Click **OK**.
+
+![Proxy Confirmation](images/image029.png)
+
+5. Set the server name to **127.0.0.1:5000** and click **OK**.
+
+![Inbound Rule Configuration](images/image030.png)
+
+6. Your reverse proxy should now be active. If you have a valid web server certificate available, ensure you also add the binding for the Default Web Site to include **https** and the configured certificate.
+
+![Default Web Site Bindings](images/image031.png)
 
 ## Certificate Template Configuration
 
 ### Enrollment Agent Configuration
 
+Signata Standalone requires an Enrollment Agent certificate to work. This is a special type of certificate that lets the Signata Standalone service request certificates on behalf of other users in your domain.
+
+Whilst in a lot of cases you can use existing certificate templates in your domain, it is recommended for Signata to have its own Enrollment Agent template, so you can tightly control the creation of the Enrollment Agent certificate for the services.
+
+When the Signata Standalone service runs, it will only look for and use Enrollment Agent certificates in the Personal store of the account running the service. For example, if your service is running with the account svc_signata@test.local, then that account’s Personal certificate store needs to be loaded with an Enrollment Agent certificate.
+
+> Warning: Incorrect Enrollment Agent permissions can result in allowing an attacker to compromise your systems by impersonating other users.
+
+1. To create an Enrollment Agent template, run **certtmpl.msc** on a domain-connected Windows server. Right-click on the default **Enrollment Agent (Computer)** template and choose **Duplicate Template**.
+
+![Duplicate Template](images/image032.png)
+
+2. Give the template a meaningful name. As it is destined for use by Signata Standalone, calling it something like “Signata Enrollment Agent” is recommended.
+
+![Set Template Name](images/image033.png)
+
+3. Next, go to the **Request Handling** tab and tick **Allow private key to be exported**.
+
+![Allow Private Key Export](images/image034.png)
+
+4. And then finally we want to control exactly who can request this type of certificate. Go to the **Security** tab and remove all groups from being allowed to request the certificate, and leave Authenticated Users as Read-only, and add the Signata Standalone server with **Read** and **Enroll** permissions.
+
+> This will ensure that **only** the Signata Standalone server can ever enroll this type of certificate.
+
+![Set Template Permissions](images/image035.png)
+
+5. Now, we need to request the Enrollment Agent certificate. First, run **certlm.msc** to open up the Local Machine certificate snap-in. Under **Personal > Certificates**, right-click on the folder and choose **All Tasks > Request New Certificate…**.
+
+![Request New Certificate](images/image036.png)
+
+6. Click **Next**.
+
+![Certificate Enrollment Wizard](images/image037.png)
+
+7. Click **Next**.
+
+![Select Policy](images/image038.png)
+
+8. Tick the Signata Enrollment Agent certificate type and click Enroll. If you don’t see the policy available to enroll, then check that your permissions are correct on the template..
+
+![Select Enrollment Agent Template](images/image039.png)
+
+9.  Click **Finish**.
+
+![Finish Enrolling](images/image040.png)
+
+You will now have an Enrollment Agent certificate in the Local Machine store. If there is more than one certificate present you can tell which one it is by it's intended purpose being Certificate Request Agent
+
+![Issued Certificate](images/image041.png)
+
+10. Now we need to export it for the Service Account to use. Right-click on the certificate and choose **Export…**.
+
+![Export Certificate](images/image042.png)
+
+11. Click **Next**.
+
+![Certificate Export Wizard](images/image043.png)
+
+12. Choose **Yes, export the private key** and click **Next**.
+
+![](images/image044.png)
+
+13. Click **Next**.
+
+![](images/image045.png)
+
+14. Choose the Password option and provide a temporary password. This doesn’t need to be stored long term, as it’s just used temporarily during this key export and import process. Click **Next**.
+
+![](images/image046.png)
+
+16. Save the file to **C:\Temp** and click **Next**.
+
+![](images/image047.png)
+
+17. Click **Finish**.
+
+![](images/image048.png)
+
+18. Now we need to import the certificate into the Personal Store for the service account. To do this, you can use runas to start mmc.exe as the Signata Service Account.
+19. When the console opens, choose File > Add/Remove Snap-in….
+20. Click Certificates and click Add, and then OK.
+21. Under the Personal store, right-click on Certificates and choose All Tasks > Import….
+22. Click Next.
+23. Choose the exported file from before. If it doesn’t appear, make sure you change the file types shown in the bottom-right. Click Open.
+24. Click Next.
+25. Provide the password and click Next.
+26. Click Next.
+27. Click Finish.
+28. You should now have the certificate available for the service account. Make sure you delete the temporary exported certificate, and you can also delete the certificate from the local computer store too.
+
 ### End User Certificate Templates
+
+Certificates issued to users in Signata need to be defined by templates, and those templates are assigned to slots on your user’s devices for use.
+
+Whilst Microsoft Certificate Authorities come out-of-the-box with several useful templates, some modifications need to be made to them to allow Signata to use them. At a minimum Signata requires the templates to allow private keys to be exported , and to allow enrollment agents to authorize the certificate request.
+
+The following are recommended templates and configuration for each slot type for a YubiKey device. It is advised to only assign templates to slots if you intend on using them, otherwise you will make issuing devices take longer than necessary and you will also add unnecessary data to system logs.
 
 #### 9A Authentication Key
 
+The 9A container should only have a key that can be used for authentication to systems. This includes for logon to laptops, desktops, and web sites.
+
+1. To create this certificate template, duplicating the Smartcard Logon template that comes with ADCS is a good starting point.
+2. You’ll need to change the name of the certificate template. It’s recommended to call the template “Signata Smartcard Logon”, so you know that it’s destined specifically for the Signata server.
+3. Under Request Handling, tick Allow private key to be exported.
+4. Under Issuance Requirements, tick This number of authorized signatures, set it to 1, the Policy type required in signature to Application policy and the Application policy Certificate Request Agent.
+> This setting will ensure that requests for this type of certificate must contain a signature from an Enrollment Agent certificate.
+5. Under Subject Name, choose the option Build from this Active Directory information and tick User principal name (UPN) . You can optionally include the user’s email address into the certificates, but if the user you want to issue does not have an email address set then the request will fail.
+6. Finally, once your certificate template is created, you’ll need to open certsrv.msc and right-click Certificate Templates and choose New > Certificate Template to Issue, selecting your newly created template.
+
 #### 9C Signing Key
+
+The 9C container should only have a key that can be used for digitally signing information. This includes signing documents, emails, and other content. To create this certificate template, duplicating the Smartcard User template that comes with ADCS is a good starting point.
+
+1. For this certificate, you’ll typically want to tick E-mail name and Include e-mail name in subject name for the Subject, as most signatures are based on a user’s email address.
+2. Under Request Handling, tick Allow private key to be exported.
+3. Under Issuance Requirements, tick This number of authorized signatures, set it to 1, the Policy type required in signature to Application policy and the Application policy Certificate Request Agent.
+
+> This setting will ensure that requests for this type of certificate must contain a signature from an Enrollment Agent certificate.
+
+4. Including Secure Email in the Application policies is recommended.
+5. And ticking Signature is proof of origin (nonrepudiation) under Key Usages is also recommended.
+6. Finally, once your certificate template is created, you’ll need to open certsrv.msc and right-click Certificate Templates and choose New > Certificate Template to Issue, selecting your newly created template.
 
 #### 9D Encryption Key
 
