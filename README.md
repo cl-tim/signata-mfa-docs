@@ -2,11 +2,13 @@
 
 ![Signata MFA Logo](images/signata-mfa.png)
 
-This repository will store all documentation for the Signata MFA product.
+This repository contains all documentation for the Signata MFA product.
 
-You can access Signata MFA here: [https://mfa.signata.net/](https://mfa.signata.net/)
+You can get Signata MFA here: [https://mfa.signata.net/](https://mfa.signata.net/)
 
 You can also access support here: [https://congruentlabs.atlassian.net/servicedesk/customer/portal/2](https://congruentlabs.atlassian.net/servicedesk/customer/portal/2)
+
+If you find any problems with this documentation, please raise an issue here or at the support portal above.
 
 ## Signata MFA: Standalone
 
@@ -26,3 +28,13 @@ These documents aim to provide guidance for configuration of the services in the
 * [Standalone Server Installation Guide](guide-standalone-server-installation.md)
 * [Standalone Client Installation Guide](guide-standalone-client-installation.md)
 * [Standalone Troubleshooting Guide](guide-standalone-troubleshooting.md)
+
+## Signata MFA: Cloud
+
+Signata MFA: Cloud Edition (Signata Cloud) is a product that allows the issuance of YubiKeys for users within your network. Signata Cloud provides a dedicated PKI for your organisation, leaving you to just install the desktop client, install trust for the PKI, and connect your favourite Identity Store to start issuing YubiKeys.
+
+This service is still being built. If you'd like to be one of the first users to try to it out, please [contact support by clicking here](https://congruentlabs.atlassian.net/servicedesk/customer/portal/2).
+
+### Table of Contents
+
+Coming Soon!
