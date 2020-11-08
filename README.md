@@ -23,3 +23,4 @@ This documentation aims to provide guidance for configuration of the services in
 
 * [Standalone Server Installation Guide](guide-standalone-server-installation.md)
 * [Standalone Client Installation Guide](guide-standalone-client-installation.md)
+* [Standalone Troubleshooting Guide](guide-standalone-troubleshooting.md)

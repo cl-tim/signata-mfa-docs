@@ -1,6 +1,6 @@
-# Signata MFA Server Installation Guide
+# Signata MFA Standalone Server Installation Guide
 
-- [Signata MFA Server Installation Guide](#signata-mfa-server-installation-guide)
+- [Signata MFA Standalone Server Installation Guide](#signata-mfa-standalone-server-installation-guide)
   - [Minimum Requirements](#minimum-requirements)
   - [Firewall Rules](#firewall-rules)
   - [Standalone Service Installation](#standalone-service-installation)

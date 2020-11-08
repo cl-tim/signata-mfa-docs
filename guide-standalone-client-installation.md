@@ -1,6 +1,6 @@
-# Signata MFA Client Installation Guide
+# Signata MFA Standalone Client Installation Guide
 
-- [Signata MFA Client Installation Guide](#signata-mfa-client-installation-guide)
+- [Signata MFA Standalone Client Installation Guide](#signata-mfa-standalone-client-installation-guide)
   - [Client Package Installation](#client-package-installation)
   - [Launching the Client](#launching-the-client)
   - [Setting the Encryption Key](#setting-the-encryption-key)
