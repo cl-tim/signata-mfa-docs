@@ -1,5 +1,28 @@
 # Signata MFA Server Installation Guide
 
+- [Signata MFA Server Installation Guide](#signata-mfa-server-installation-guide)
+  - [Minimum Requirements](#minimum-requirements)
+  - [Firewall Rules](#firewall-rules)
+  - [Standalone Service Installation](#standalone-service-installation)
+  - [Service Account Creation](#service-account-creation)
+  - [IIS & Reverse Proxy Configuration](#iis--reverse-proxy-configuration)
+    - [Enabling IIS](#enabling-iis)
+    - [Installing Reverse Proxy Modules](#installing-reverse-proxy-modules)
+    - [Configuring the Reverse Proxy](#configuring-the-reverse-proxy)
+  - [Certificate Template Configuration](#certificate-template-configuration)
+    - [Enrollment Agent Configuration](#enrollment-agent-configuration)
+    - [End User Certificate Templates](#end-user-certificate-templates)
+      - [9A Authentication Key](#9a-authentication-key)
+      - [9C Signing Key](#9c-signing-key)
+      - [9D Encryption Key](#9d-encryption-key)
+      - [9E Card Authentication Key](#9e-card-authentication-key)
+  - [Signata Standalone Service Configuration](#signata-standalone-service-configuration)
+    - [Directory Configuration](#directory-configuration)
+    - [Certificate Authority Configuration](#certificate-authority-configuration)
+    - [API Key Configuration](#api-key-configuration)
+    - [Product Licence](#product-licence)
+  - [Post Configuration](#post-configuration)
+
 ## Minimum Requirements
 
 At a minimum, you will need:
@@ -225,7 +248,7 @@ When the Signata Standalone service runs, it will only look for and use Enrollme
 
 ![Finish Enrolling](images/image040.png)
 
-You will now have an Enrollment Agent certificate in the Local Machine store. If there is more than one certificate present you can tell which one it is by it's intended purpose being Certificate Request Agent
+You will now have an Enrollment Agent certificate in the Local Machine store. If there is more than one certificate present you can tell which one it is by it's intended purpose being Certificate Request Agent.
 
 ![Issued Certificate](images/image041.png)
 
@@ -239,41 +262,75 @@ You will now have an Enrollment Agent certificate in the Local Machine store. If
 
 12. Choose **Yes, export the private key** and click **Next**.
 
-![](images/image044.png)
+![Choose Export Private Key](images/image044.png)
 
 13. Click **Next**.
 
-![](images/image045.png)
+![Click Next](images/image045.png)
 
 14. Choose the Password option and provide a temporary password. This doesn’t need to be stored long term, as it’s just used temporarily during this key export and import process. Click **Next**.
 
-![](images/image046.png)
+![Defining a Temporary Password](images/image046.png)
 
 16. Save the file to **C:\Temp** and click **Next**.
 
-![](images/image047.png)
+![Set File Location](images/image047.png)
 
 17. Click **Finish**.
 
-![](images/image048.png)
+![Finish Wizard](images/image048.png)
 
-18. Now we need to import the certificate into the Personal Store for the service account. To do this, you can use runas to start mmc.exe as the Signata Service Account.
-19. When the console opens, choose File > Add/Remove Snap-in….
-20. Click Certificates and click Add, and then OK.
-21. Under the Personal store, right-click on Certificates and choose All Tasks > Import….
-22. Click Next.
-23. Choose the exported file from before. If it doesn’t appear, make sure you change the file types shown in the bottom-right. Click Open.
-24. Click Next.
-25. Provide the password and click Next.
-26. Click Next.
-27. Click Finish.
+18. Now we need to import the certificate into the Personal Store for the service account. To do this, you can use **runas** to start **mmc.exe** as the Signata Service Account.
+
+![Runas MMC](images/image049.png)
+
+19. When the console opens, choose **File > Add/Remove Snap-in…**.
+
+![Add Snapin Menu](images/image050.png)
+
+20. Click **Certificates** and click **Add**, and then **OK**.
+
+![Adding Certificate Snapin](images/image051.png)
+
+21. Under the **Personal** store, right-click on **Certificates** and choose **All Tasks > Import…**.
+
+![Importing Certificate](images/image052.png)
+
+22. Click **Next**.
+
+![Certificate Import Wizard](images/image053.png)
+
+23. Choose the exported file from before. If it doesn’t appear, make sure you change the file types shown in the bottom-right. Click **Open**.
+
+![Selecting the PKCS12 File](images/image054.png)
+
+24. Click **Next**.
+
+![Click Next](images/image055.png)
+
+25. Provide the password and click **Next**.
+
+![Enter Password](images/image056.png)
+
+26. Click **Next**.
+
+![Click Next](images/image057.png)
+
+27. Click **Finish**.
+
+![Finish Wizard](images/image058.png)
+
 28. You should now have the certificate available for the service account. Make sure you delete the temporary exported certificate, and you can also delete the certificate from the local computer store too.
+
+![Imported Certificate](images/image059.png)
 
 ### End User Certificate Templates
 
 Certificates issued to users in Signata need to be defined by templates, and those templates are assigned to slots on your user’s devices for use.
 
-Whilst Microsoft Certificate Authorities come out-of-the-box with several useful templates, some modifications need to be made to them to allow Signata to use them. At a minimum Signata requires the templates to allow private keys to be exported , and to allow enrollment agents to authorize the certificate request.
+Whilst Microsoft Certificate Authorities come out-of-the-box with several useful templates, some modifications need to be made to them to allow Signata to use them. At a minimum Signata requires the templates to allow private keys to be exported, and to allow enrollment agents to authorize the certificate request.
+
+> Private keys for all certificate types are generated on the Signata server and then injected into the user’s device over a secure connection. Future versions of Signata may include the option to generate the keys on the device instead.
 
 The following are recommended templates and configuration for each slot type for a YubiKey device. It is advised to only assign templates to slots if you intend on using them, otherwise you will make issuing devices take longer than necessary and you will also add unnecessary data to system logs.
 
@@ -281,40 +338,153 @@ The following are recommended templates and configuration for each slot type for
 
 The 9A container should only have a key that can be used for authentication to systems. This includes for logon to laptops, desktops, and web sites.
 
-1. To create this certificate template, duplicating the Smartcard Logon template that comes with ADCS is a good starting point.
-2. You’ll need to change the name of the certificate template. It’s recommended to call the template “Signata Smartcard Logon”, so you know that it’s destined specifically for the Signata server.
-3. Under Request Handling, tick Allow private key to be exported.
-4. Under Issuance Requirements, tick This number of authorized signatures, set it to 1, the Policy type required in signature to Application policy and the Application policy Certificate Request Agent.
+1. To create this certificate template, duplicating the **Smartcard Logon** template that comes with ADCS is a good starting point.
+
+![Duplicate Smartcard Logon Template](images/image060.png)
+
+2. You’ll need to change the name of the certificate template. It’s recommended to call the template "Signata Smartcard Logon", so you know that it’s destined specifically for the Signata server.
+
+![Changing Template Name](images/image061.png)
+
+3. Under Request Handling, tick **Allow private key to be exported**.
+
+![Allow Private Key Export](images/image062.png)
+
+4. Under Issuance Requirements, tick **This number of authorized signatures**, set it to **1**, the Policy type required in signature to **Application policy** and the Application policy **Certificate Request Agent**.
+
 > This setting will ensure that requests for this type of certificate must contain a signature from an Enrollment Agent certificate.
-5. Under Subject Name, choose the option Build from this Active Directory information and tick User principal name (UPN) . You can optionally include the user’s email address into the certificates, but if the user you want to issue does not have an email address set then the request will fail.
-6. Finally, once your certificate template is created, you’ll need to open certsrv.msc and right-click Certificate Templates and choose New > Certificate Template to Issue, selecting your newly created template.
+
+![Enabling Enrollment Agent](images/image063.png)
+
+5. Under Subject Name, choose the option **Build from this Active Directory information** and tick **User principal name (UPN)** . You can optionally include the user’s email address into the certificates, but if the user you want to issue does not have an email address set then the request will fail.
+
+> UserPrincipalName is often the best attribute to use for authenticating users, as it must be unique and it provides the user’s domain name too.
+
+![Subject Name Settings](images/image064.png)
+
+6. Finally, once your certificate template is created, you’ll need to open **certsrv.msc** and right-click **Certificate Templates** and choose **New > Certificate Template to Issue**, selecting your newly created template.
+
+![New Template to Issue](images/image065.png)
 
 #### 9C Signing Key
 
-The 9C container should only have a key that can be used for digitally signing information. This includes signing documents, emails, and other content. To create this certificate template, duplicating the Smartcard User template that comes with ADCS is a good starting point.
+The 9C container should only have a key that can be used for digitally signing information. This includes signing documents, emails, and other content. To create this certificate template, duplicating the **Smartcard User** template that comes with ADCS is a good starting point.
 
-1. For this certificate, you’ll typically want to tick E-mail name and Include e-mail name in subject name for the Subject, as most signatures are based on a user’s email address.
-2. Under Request Handling, tick Allow private key to be exported.
-3. Under Issuance Requirements, tick This number of authorized signatures, set it to 1, the Policy type required in signature to Application policy and the Application policy Certificate Request Agent.
+1. For this certificate, you’ll typically want to tick **E-mail name** and **Include e-mail name in subject name** for the Subject, as most signatures are based on a user’s email address.
+
+![Adding Email](images/image066.png)
+
+2. Under Request Handling, tick **Allow private key to be exported**.
+
+![Allow Private Key Export](images/image062.png)
+
+3. Under Issuance Requirements, tick **This number of authorized signatures**, set it to **1**, the Policy type required in signature to **Application policy** and the Application policy **Certificate Request Agent**.
 
 > This setting will ensure that requests for this type of certificate must contain a signature from an Enrollment Agent certificate.
 
-4. Including Secure Email in the Application policies is recommended.
-5. And ticking Signature is proof of origin (nonrepudiation) under Key Usages is also recommended.
-6. Finally, once your certificate template is created, you’ll need to open certsrv.msc and right-click Certificate Templates and choose New > Certificate Template to Issue, selecting your newly created template.
+![Enabling Enrollment Agent](images/image063.png)
+
+4. Including **Secure Email** in the Application policies is recommended.
+
+![Including Secure Email](images/image067.png)
+
+5. And ticking **Signature is proof of origin (nonrepudiation)** under Key Usages is also recommended.
+
+![Enabling Nonrepudiation](images/image068.png)
+
+6. Finally, once your certificate template is created, you’ll need to open **certsrv.msc** and right-click **Certificate Templates** and choose **New > Certificate Template to Issue**, selecting your newly created template.
+
+![New Template to Issue](images/image065.png)
 
 #### 9D Encryption Key
 
+The 9D container should only have a key that can be used for encrypting data. This includes encrypting documents, emails, and other content. Encryption certificates are also typically required to be archived, so that you can always decrypt data created by it even once the certificate has expired. To create this certificate template, duplicating the **Basic EFS** template that comes with ADCS is a good starting point.
+
+1. For this certificate, you’ll typically want to tick **E-mail name** and **Include e-mail name in subject name** for the Subject, as this will be needed for encrypting emails and other artefacts.
+
+![Adding Email](images/image066.png)
+
+2. Under Request Handling, make sure the purpose is set to **Encryption** and  **Allow private key to be exported** is ticked.
+
+![Allow Private Key Export](images/image069.png)
+
+3. Under Issuance Requirements, tick **This number of authorized signatures**, set it to **1**, the Policy type required in signature to **Application policy** and the Application policy **Certificate Request Agent**.
+
+> This setting will ensure that requests for this type of certificate must contain a signature from an Enrollment Agent certificate.
+
+![Enabling Enrollment Agent](images/image063.png)
+
+4. Including **Secure Email**, **Document Encryption**, and **Encrypting File System** in the Application policies is recommended.
+
+![Including Secure Email](images/image070.png)
+
+5. And ticking **Allow key exchange only with key encryption (key encipherment)** under Key Usages is also recommended.
+
+![Enabling Nonrepudiation](images/image071.png)
+
+6. Finally, once your certificate template is created, you’ll need to open **certsrv.msc** and right-click **Certificate Templates** and choose **New > Certificate Template to Issue**, selecting your newly created template.
+
+![New Template to Issue](images/image065.png)
+
 #### 9E Card Authentication Key
+
+The 9E container should only have a key that can be used for physical access control systems, such as building entry doors or boomgates. This container **does not** require a PIN to be provided by the user, so configuration of the certificate templates must be taken with care.
+
+Should you wish to use this key container, and you are unsure of the required key usages, please contact Signata Support.
 
 ## Signata Standalone Service Configuration
 
+By default Signata Standalone is installed into the directory **C:\Program Files (x86)\Signata Standalone Server**. Within this directory there is a file called **appsettings.json**. This is the first file you will need to configure.
+
+Please ensure this file stays as JSON formatted text, otherwise the server will fail to read it.
+
+![appsettings.json](images/image072.png)
+
 ### Directory Configuration
+
+Settings | Example or Default Value | Explanation
+-------- | ------------------------ | -----------
+DirectoryType | ActiveDirectory | Reserved for future use. This does not need to be modified at this time.
+DirectoryUsername | svc_signata@yourdomain.com | The userPrincipalName of the service account created for read-only access to the directory.
+DirectoryPassword | N0t4u2c | The password for the service account created for read-only access to the directory.
+DirectorySearchFilter | (&(objectCategory=user)(sAMAccountName=\*{0}\*)) | This search filter should not need to be modified. If you wish to search on attributes other than sAMAccountName, or add more filters, then please note that the search parameters sent from the client are passed in to replace the “{0}” characters.
+DirectoryLdapsEnabled | true | It is recommended to leave this field as true, but if you have connection problems with the directory changing this to false can be useful for verifying that the LDAPS certificate is the cause.
+DirectoryPath | LDAP://hostname/OU=Users,OU=Company,DC=example,DC=com | Do not change “LDAP” to “LDAPS” to enable LDAPS traffic – this setting must always be set to “LDAP”. Set the hostname to your domain name, or a specific AD server. Set the last part as the part of the directory that you want to search for users inside (so you can filter out other directory segments containing service accounts or other irrelevant objects).
+
+![Directory Config](images/image073.png)
 
 ### Certificate Authority Configuration
 
+The **MSCertificateAuthority** setting simply defines the name of your Microsoft Enterprise Certification Authority (CA). The name of your CA is usually written as "CAServer\CAName". As this configuration value is in JSON format, you need to escape the backslash in the name by adding a second backslash, so it reads like "CAServer\\\CAName".
+
+This name should be sufficient for Signata to connect to the CA and read configuration from it.
+
+![Certificate Authority Config](images/image074.png)
+
 ### API Key Configuration
+
+Every desktop client that connects to Signata must use an API Key to authenticate. These keys are defined in the configuration file as the **ClientApiKeys** field.
+
+![Client API Keys](images/image075.png)
+
+Each key must be defined as “name:key”, where name can be any unique name, and the key can be any text value you like.
+
+To easily add more keys, you can just use the Signata standalone executable from an Administrative command prompt window by running *SignataEnterpriseServer.exe -AddClient [clientname]* where [clientname] is the desired name you wish to use. This command will generate a new client and add it to the configuration file, and the GUID that appears in response will be what you need to provide in the desktop client when it is first launched.
+
+![Generating Clients](images/image076.png)
+
+> Warning: be careful with storing the client API key. Should the API key be stolen, then an attacker could request certificates from the Signata server for any user. If you suspect a key may be compromised, simply remove it from the configuration file and restart the service to immediately revoke it.
 
 ### Product Licence
 
+Signata MFA requires a product licence to operate. This licence is validated on both the server and the desktop client. Once you have received your product licence from the Signata MFA website, simply paste the contents into the Licence field in the configuration file.
+
+![Product Licence](images/image077.png)
+
+The licence contains two parts – the first is a hexadecimal encoded version of the licence, and the second is a base64 encoded digital signature to prevent tampering. The "|" character in the middle marks the split between these two parts.
+
 ## Post Configuration
+
+Once all configuration settings have been set, simply start the *Signata Enterprise Service* again for the changes to take effect.
+
+Should any settings be incorrectly set, then the *Application* Windows Event Log will contain errors that can be used to troubleshoot the problem.
