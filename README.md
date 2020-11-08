@@ -6,6 +6,8 @@ This repository contains all documentation for the Signata MFA product.
 
 You can get Signata MFA here: [https://mfa.signata.net/](https://mfa.signata.net/)
 
+A presentation discussing the MFA product is here: [Signata MFA Overview Presentation](signata-mfa-overview-presentation.pdf)
+
 You can also access support here: [https://congruentlabs.atlassian.net/servicedesk/customer/portal/2](https://congruentlabs.atlassian.net/servicedesk/customer/portal/2)
 
 If you find any problems with this documentation, please raise an issue here or at the support portal above.
