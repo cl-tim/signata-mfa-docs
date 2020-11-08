@@ -18,3 +18,7 @@ Some of the pre-requisites include:
 * A server within your network that the Signata service can be installed on to, and IIS also enabled for use as a reverse proxy.
 
 This documentation aims to provide guidance for configuration of the services in the most simple and optimal manner.
+
+### Standalone Table of Contents
+
+[Standalone Server Installation Guide](guide-standalone-server-installation.md)
