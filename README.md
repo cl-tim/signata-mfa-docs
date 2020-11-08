@@ -22,4 +22,4 @@ This documentation aims to provide guidance for configuration of the services in
 ### Standalone Table of Contents
 
 * [Standalone Server Installation Guide](guide-standalone-server-installation.md)
-* [Standalone Client Installation Guide](guide-standalone-server-installation.md)
+* [Standalone Client Installation Guide](guide-standalone-client-installation.md)
